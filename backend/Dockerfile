@@ -46,6 +46,9 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 # Copy supervisord config
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# Copy OPcache config
+COPY docker/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+
 # Expose port
 EXPOSE 80
 

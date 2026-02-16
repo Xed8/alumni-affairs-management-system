@@ -9,26 +9,56 @@ services:
     ports:
       - "8000:80"
     environment:
+      # Laravel settings
       - APP_ENV=local
       - APP_DEBUG=true
+      - APP_URL=http://localhost:8000
+      
+      # Database
       - DB_CONNECTION=mysql
       - DB_HOST=mysql
       - DB_PORT=3306
       - DB_DATABASE=alumni
       - DB_USERNAME=alumni
       - DB_PASSWORD=password123
+      
+      # Cache/Session/Queue
       - CACHE_STORE=database
       - QUEUE_CONNECTION=database
       - SESSION_DRIVER=database
+      
+      # CRITICAL: Disable Xdebug by default (toggle with ENABLE_XDEBUG=1)
+      - XDEBUG_MODE=off
+      - XDEBUG_CONFIG=client_host=host.docker.internal
+      
+      # PHP settings
+      - PHP_MEMORY_LIMIT=512M
+      - PHP_MAX_EXECUTION_TIME=300
+    
     volumes:
-      - ./backend:/app
-      - ./backend/storage:/app/storage
-      - ./backend/bootstrap/cache:/app/bootstrap/cache
+      # Code: bind mount for live editing (fast in WSL2)
+      - ./backend:/app:delegated
+      
+      # Vendor: named volume (never sync back to host)
+      - backend_vendor:/app/vendor
+      
+      # Storage: named volume (persist uploads, logs)
+      - backend_storage:/app/storage
+      
+      # Bootstrap cache: named volume (fast, isolated)
+      - backend_cache:/app/bootstrap/cache
+      
+      # OPcache config (no volume needed after mounted in Dockerfile)
+    
     depends_on:
       mysql:
         condition: service_healthy
+    
     networks:
       - alumni-network
+    
+    # Restart policy for stability
+    restart: unless-stopped
 
   frontend:
     build:
@@ -37,10 +67,14 @@ services:
     container_name: alumni-frontend
     ports:
       - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src:delegated
+      - ./frontend/public:/app/public:delegated
     depends_on:
       - backend
     networks:
       - alumni-network
+    restart: unless-stopped
 
   mysql:
     image: mysql:8.0
@@ -60,6 +94,7 @@ services:
       retries: 5
     networks:
       - alumni-network
+    restart: unless-stopped
 
   phpmyadmin:
     image: phpmyadmin:latest
@@ -75,8 +110,16 @@ services:
       - mysql
     networks:
       - alumni-network
+    restart: unless-stopped
 
 volumes:
+  # Named volumes for fast, isolated storage
+  backend_vendor:
+    driver: local
+  backend_storage:
+    driver: local
+  backend_cache:
+    driver: local
   mysql_data:
     driver: local
 
