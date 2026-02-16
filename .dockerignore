@@ -1,0 +1,17 @@
+# Backend (Laravel)
+backend/node_modules/
+backend/vendor/
+backend/bootstrap/cache/
+backend/storage/logs/
+backend/.env.local
+backend/.env.*.local
+
+# Frontend (React)
+frontend/node_modules/
+frontend/dist/
+
+# General
+.DS_Store
+.env.local
+.env.*.local
+*.log
